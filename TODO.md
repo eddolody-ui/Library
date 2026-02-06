@@ -1,0 +1,2 @@
+- [x] Add onClick handler to BookOpen button in BookDetail.tsx to open PDF in new tab or show alert if no PDF
+- [x] Add "Read Book" text to the button for clarity

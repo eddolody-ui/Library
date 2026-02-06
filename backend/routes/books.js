@@ -1,0 +1,139 @@
+const express = require('express');
+const router = express.Router();
+const Book = require('../models/Book');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for file uploads (images and PDFs)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === 'coverImage' && !file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed for cover image!'), false);
+    }
+    if (file.fieldname === 'pdfFile' && file.mimetype !== 'application/pdf') {
+      return cb(new Error('Only PDF files are allowed for PDF file!'), false);
+    }
+    cb(null, true);
+  }
+});
+
+// GET all books
+router.get('/', async (req, res) => {
+  try {
+    const books = await Book.find();
+    res.json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET single book by ID
+router.get('/:id', async (req, res) => {
+  try {
+    let book = null;
+    // Try MongoDB ObjectId first
+    if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      book = await Book.findById(req.params.id);
+    }
+    // If not found, try custom bookId
+    if (!book) {
+      book = await Book.findOne({ bookId: req.params.id });
+    }
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+    res.json(book);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// POST create new book
+router.post('/', upload.fields([{ name: 'coverImage', maxCount: 1 }, { name: 'pdfFile', maxCount: 1 }]), async (req, res) => {
+  const book = new Book({
+    title: req.body.title,
+    author: req.body.author,
+    description: req.body.description,
+    coverImage: req.files.coverImage ? req.files.coverImage[0].path : req.body.coverImage,
+    pdfFile: req.files.pdfFile ? req.files.pdfFile[0].path : null,
+  });
+
+  try {
+    const newBook = await book.save();
+    res.status(201).json(newBook);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// PUT update book
+router.put('/:id', async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+
+    book.title = req.body.title || book.title;
+    book.author = req.body.author || book.author;
+    book.genre = req.body.genre || book.genre;
+    book.description = req.body.description || book.description;
+    book.coverImage = req.body.coverImage || book.coverImage;
+    book.publicationYear = req.body.publicationYear || book.publicationYear;
+    book.rating = req.body.rating || book.rating;
+    book.availability = req.body.availability !== undefined ? req.body.availability : book.availability;
+    book.isbn = req.body.isbn || book.isbn;
+
+    const updatedBook = await book.save();
+    res.json(updatedBook);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// DELETE book
+router.delete('/:id', async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+
+    await book.deleteOne();
+    res.json({ message: 'Book deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// POST upload PDF for a book
+router.post('/:id/upload-pdf', upload.single('pdf'), async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No PDF file uploaded' });
+    }
+
+    book.pdfFile = req.file.path;
+    await book.save();
+    res.json({ message: 'PDF uploaded successfully', pdfFile: req.file.path });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports = router;
