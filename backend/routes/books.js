@@ -86,13 +86,8 @@ router.put('/:id', async (req, res) => {
 
     book.title = req.body.title || book.title;
     book.author = req.body.author || book.author;
-    book.genre = req.body.genre || book.genre;
     book.description = req.body.description || book.description;
     book.coverImage = req.body.coverImage || book.coverImage;
-    book.publicationYear = req.body.publicationYear || book.publicationYear;
-    book.rating = req.body.rating || book.rating;
-    book.availability = req.body.availability !== undefined ? req.body.availability : book.availability;
-    book.isbn = req.body.isbn || book.isbn;
 
     const updatedBook = await book.save();
     res.json(updatedBook);

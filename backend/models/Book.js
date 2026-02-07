@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const bookSchema = new mongoose.Schema({
   bookId: {
     type: String,
-    required: true
+    required: true,
+        default: function () {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        },
   },
   title: {
     type: String,
@@ -24,26 +27,6 @@ const bookSchema = new mongoose.Schema({
   pdfFile: {
     type: String,
     default: null
-  },
-  genre: {
-    type: String,
-    default: ''
-  },
-  publicationYear: {
-    type: Number,
-    default: null
-  },
-  rating: {
-    type: Number,
-    default: 0
-  },
-  availability: {
-    type: Boolean,
-    default: true
-  },
-  isbn: {
-    type: String,
-    default: ''
   }
 },
 {
