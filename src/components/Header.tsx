@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, Menu, X, User, BookOpen, Moon, Sun, Upload } from 'lucide-react'
 import type { Book } from '../data/books'
+import { API_BASE_URL } from '../lib/config'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -32,7 +33,7 @@ const Header = () => {
 
       setIsSearching(true)
       try {
-        const response = await fetch(`https://librarybeckend.onrender.com/api/books?search=${encodeURIComponent(query)}&limit=20`)
+        const response = await fetch(`${API_BASE_URL}/api/books?search=${encodeURIComponent(query)}&limit=20`)
         if (response.ok) {
           const data = await response.json()
           // Filter for exact title matches (case-insensitive)
@@ -129,7 +130,7 @@ const Header = () => {
                           className="w-full px-4 py-3 text-left hover:bg-accent transition-colors flex items-center gap-3"
                         >
                           <img
-                            src={book.coverImage || '/src/assets/default-cover.png'}
+                            src={book.coverImage || '/assets/default-cover.png'}
                             alt={book.title}
                             className="w-8 h-10 object-cover rounded"
                           />

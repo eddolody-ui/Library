@@ -71,15 +71,26 @@ router.get('/:id', async (req, res) => {
 
 // POST create new book
 router.post('/', upload.fields([{ name: 'coverImage', maxCount: 1 }, { name: 'pdfFile', maxCount: 1 }]), async (req, res) => {
-  const book = new Book({
-    title: req.body.title,
-    author: req.body.author,
-    description: req.body.description,
-    coverImage: req.files.coverImage ? req.files.coverImage[0].id : req.body.coverImage,
-    pdfFile: req.files.pdfFile ? req.files.pdfFile[0].id : null,
-  });
-
   try {
+    let coverImageId = null;
+    let pdfFileId = null;
+
+    if (req.files.coverImage && req.files.coverImage[0]) {
+      coverImageId = await uploadToGridFS(req.files.coverImage[0], 'uploads');
+    }
+
+    if (req.files.pdfFile && req.files.pdfFile[0]) {
+      pdfFileId = await uploadToGridFS(req.files.pdfFile[0], 'uploads');
+    }
+
+    const book = new Book({
+      title: req.body.title,
+      author: req.body.author,
+      description: req.body.description,
+      coverImage: coverImageId,
+      pdfFile: pdfFileId,
+    });
+
     const newBook = await book.save();
     res.status(201).json(newBook);
   } catch (error) {

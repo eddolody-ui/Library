@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import BookCard from '../components/BookCard'
 import type { Book } from '../data/books'
+import { API_BASE_URL } from '../lib/config'
 
 const Home = () => {
   const [books, setBooks] = useState<Book[]>([])
@@ -11,7 +12,7 @@ const Home = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch('https://librarybeckend.onrender.com/api/books')
+        const response = await fetch(`${API_BASE_URL}/api/books`)
         if (!response.ok) {
           throw new Error('Failed to fetch books')
         }

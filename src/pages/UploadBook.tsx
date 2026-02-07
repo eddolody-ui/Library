@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../lib/config';
 
 const UploadBook = () => {
   const [formData, setFormData] = useState({
@@ -41,7 +42,7 @@ const UploadBook = () => {
     }
 
     try {
-      const response = await fetch('https://librarybeckend.onrender.com/api/books', {
+      const response = await fetch(`${API_BASE_URL}/api/books`, {
         method: 'POST',
         body: data,
       });

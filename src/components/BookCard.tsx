@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { Book } from '../data/books'
+import { API_BASE_URL } from '../lib/config'
 
 interface BookCardProps {
   book: Book
@@ -17,12 +18,12 @@ const BookCard = ({ book }: BookCardProps) => {
             if (book.coverImage) {
               // Check if coverImage is an ObjectId (string representation)
               if (typeof book.coverImage === 'string' && book.coverImage.match(/^[0-9a-fA-F]{24}$/)) {
-                return `https://librarybeckend.onrender.com/api/files/${book.coverImage}`;
+                return `${API_BASE_URL}/api/files/${book.coverImage}`;
               }
               // Fallback for old path-based images
               const normalized = book.coverImage.replace(/\\/g, '/');
               if (normalized.startsWith('uploads/')) {
-                return `https://librarybeckend.onrender.com/${normalized}`;
+                return `${API_BASE_URL}/${normalized}`;
               }
               return normalized;
             }

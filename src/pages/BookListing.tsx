@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import BookCard from '../components/BookCard'
 import type { Book } from '../data/books'
+import { API_BASE_URL } from '../lib/config'
 
 const BookListing = () => {
   const [books, setBooks] = useState<Book[]>([])
@@ -15,8 +16,8 @@ const BookListing = () => {
       try {
         const searchQuery = searchParams.get('search')
         const url = searchQuery
-          ? `https://librarybeckend.onrender.com/api/books?search=${encodeURIComponent(searchQuery)}`
-          : 'https://librarybeckend.onrender.com/api/books'
+          ? `${API_BASE_URL}/api/books?search=${encodeURIComponent(searchQuery)}`
+          : `${API_BASE_URL}/api/books`
         const response = await fetch(url)
         if (!response.ok) {
           throw new Error('Failed to fetch books')

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Star, BookOpen, Calendar, ArrowLeft, Heart, Share2 } from 'lucide-react'
 import type { Book } from '../data/books'
+import { API_BASE_URL } from '../lib/config'
 
 const BookDetail = () => {
   const { bookId } = useParams()
@@ -13,7 +14,7 @@ const BookDetail = () => {
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const response = await fetch(`https://librarybeckend.onrender.com/api/books/${bookId}`)
+        const response = await fetch(`${API_BASE_URL}/api/books/${bookId}`)
         if (!response.ok) {
           const errorMsg = `Failed to fetch book: ${response.status} ${response.statusText}`;
           throw new Error(errorMsg);
@@ -95,12 +96,12 @@ const BookDetail = () => {
                 if (book.coverImage) {
                   // Check if coverImage is an ObjectId (string representation)
                   if (typeof book.coverImage === 'string' && book.coverImage.match(/^[0-9a-fA-F]{24}$/)) {
-                    return `https://librarybeckend.onrender.com/api/files/${book.coverImage}`;
+                    return `${API_BASE_URL}/api/files/${book.coverImage}`;
                   }
                   // Fallback for old path-based images
                   const normalized = book.coverImage.replace(/\\/g, '/');
                   if (normalized.startsWith('uploads/')) {
-                    return `https://librarybeckend.onrender.com/${normalized}`;
+                    return `${API_BASE_URL}/${normalized}`;
                   }
                   return normalized;
                 }
@@ -116,7 +117,7 @@ const BookDetail = () => {
               <button
                 onClick={() => {
                   if (book.pdfFile) {
-                    const pdfUrl = `https://librarybeckend.onrender.com/${book.pdfFile.replace(/\\/g, '/')}`;
+                    const pdfUrl = `${API_BASE_URL}/${book.pdfFile.replace(/\\/g, '/')}`;
                     window.open(pdfUrl, '_blank');
                   } else {
                     alert('No PDF available for this book.');
