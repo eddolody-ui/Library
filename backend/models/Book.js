@@ -7,6 +7,7 @@ const bookSchema = new mongoose.Schema({
         default: function () {
             return Math.floor(100000 + Math.random() * 900000).toString();
         },
+        unique: true,
   },
   title: {
     type: String,

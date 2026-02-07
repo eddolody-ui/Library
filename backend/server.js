@@ -16,10 +16,19 @@ app.use(express.static(path.join(__dirname, '../dist')));
 
 // MongoDB connection
 const mongoURI = process.env.MONGO_URI;
+const Book = require('./models/Book');
 
 mongoose.connect(mongoURI)
 .then(() => {
   console.log('Connected to MongoDB');
+  // Drop the erroneous isbn_1 index if it exists
+  Book.collection.dropIndex('isbn_1', (err) => {
+    if (err) {
+      console.log('Index isbn_1 not found or already dropped:', err.message);
+    } else {
+      console.log('Dropped index isbn_1');
+    }
+  });
 })
 .catch((error) => {
   console.error('Error connecting to MongoDB:', error);
