@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, '../dist')));
 const mongoURI = process.env.MONGO_URI;
 const Book = require('./models/Book');
 
-mongoose.connect(mongoURI)
+mongoose.connect(mongoURI, { dbName: 'minilibrary' })
 .then(() => {
   console.log('Connected to MongoDB');
   // Drop the erroneous isbn_1 index if it exists
