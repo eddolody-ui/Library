@@ -2,15 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
 const multer = require('multer');
-const path = require('path');
+const GridFsStorage = require('multer-gridfs-storage').GridFsStorage;
+const mongoose = require('mongoose');
 
-// Configure multer for file uploads (images and PDFs)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+// Configure multer for GridFS storage
+const storage = new GridFsStorage({
+  url: process.env.MONGO_URI,
+  options: { useNewUrlParser: true, useUnifiedTopology: true },
+  file: (req, file) => {
+    return {
+      bucketName: 'uploads',
+      filename: `${Date.now()}-${file.originalname}`
+    };
   }
 });
 
@@ -30,7 +33,12 @@ const upload = multer({
 // GET all books
 router.get('/', async (req, res) => {
   try {
-    const books = await Book.find();
+    const searchQuery = req.query.search;
+    let query = {};
+    if (searchQuery) {
+      query.title = new RegExp(`^${searchQuery}$`, 'i');
+    }
+    const books = await Book.find(query);
     res.json(books);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -64,8 +72,8 @@ router.post('/', upload.fields([{ name: 'coverImage', maxCount: 1 }, { name: 'pd
     title: req.body.title,
     author: req.body.author,
     description: req.body.description,
-    coverImage: req.files.coverImage ? req.files.coverImage[0].path : req.body.coverImage,
-    pdfFile: req.files.pdfFile ? req.files.pdfFile[0].path : null,
+    coverImage: req.files.coverImage ? req.files.coverImage[0].id : req.body.coverImage,
+    pdfFile: req.files.pdfFile ? req.files.pdfFile[0].id : null,
   });
 
   try {
@@ -123,9 +131,9 @@ router.post('/:id/upload-pdf', upload.single('pdf'), async (req, res) => {
       return res.status(400).json({ message: 'No PDF file uploaded' });
     }
 
-    book.pdfFile = req.file.path;
+    book.pdfFile = req.file.id;
     await book.save();
-    res.json({ message: 'PDF uploaded successfully', pdfFile: req.file.path });
+    res.json({ message: 'PDF uploaded successfully', pdfFile: req.file.id });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

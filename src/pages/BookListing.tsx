@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import BookCard from '../components/BookCard'
 import type { Book } from '../data/books'
 
@@ -7,11 +8,16 @@ const BookListing = () => {
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch('https://librarybeckend.onrender.com/api/books')
+        const searchQuery = searchParams.get('search')
+        const url = searchQuery
+          ? `https://librarybeckend.onrender.com/api/books?search=${encodeURIComponent(searchQuery)}`
+          : 'https://librarybeckend.onrender.com/api/books'
+        const response = await fetch(url)
         if (!response.ok) {
           throw new Error('Failed to fetch books')
         }
@@ -25,7 +31,7 @@ const BookListing = () => {
     }
 
     fetchBooks()
-  }, [])
+  }, [searchParams])
 
   return (
     <div className="space-y-8">

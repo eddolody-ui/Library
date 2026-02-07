@@ -1,3 +1,9 @@
-- [x] Remove unnecessary fields (genre, publicationYear, rating, availability, isbn) from Book.js schema
-- [x] Update PUT route in books.js to not handle the removed fields
-- [ ] Test the upload functionality to ensure it works
+- [x] Add live search dropdown to Header.tsx
+  - [x] Import necessary hooks and types
+  - [x] Add state for search results, loading, and dropdown visibility
+  - [x] Implement debounced search function
+  - [x] Update input onChange to trigger search
+  - [x] Render dropdown with matching books
+  - [x] Handle navigation on book selection
+  - [x] Hide dropdown on blur or empty input
+- [x] Test live search functionality

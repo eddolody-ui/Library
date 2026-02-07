@@ -15,7 +15,11 @@ const BookCard = ({ book }: BookCardProps) => {
         <img
           src={(() => {
             if (book.coverImage) {
-              // Convert backslashes to forward slashes for URL
+              // Check if coverImage is an ObjectId (string representation)
+              if (typeof book.coverImage === 'string' && book.coverImage.match(/^[0-9a-fA-F]{24}$/)) {
+                return `https://librarybeckend.onrender.com/api/files/${book.coverImage}`;
+              }
+              // Fallback for old path-based images
               const normalized = book.coverImage.replace(/\\/g, '/');
               if (normalized.startsWith('uploads/')) {
                 return `https://librarybeckend.onrender.com/${normalized}`;

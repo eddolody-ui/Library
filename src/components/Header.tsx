@@ -1,20 +1,75 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, Menu, X, User, BookOpen, Moon, Sun, Upload } from 'lucide-react'
+import type { Book } from '../data/books'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Book[]>([])
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
   const isAdmin = true
   const navigate = useNavigate()
+
+  // Debounce utility function
+  function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+    let timeout: NodeJS.Timeout
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeout)
+      timeout = setTimeout(() => func(...args), wait)
+    }
+  }
+
+  const debouncedSearch = useCallback(
+    debounce(async (query: string) => {
+      if (query.trim().length < 2) {
+        setSearchResults([])
+        setShowDropdown(false)
+        return
+      }
+
+      setIsSearching(true)
+      try {
+        const response = await fetch(`https://librarybeckend.onrender.com/api/books?search=${encodeURIComponent(query)}&limit=20`)
+        if (response.ok) {
+          const data = await response.json()
+          // Filter for exact title matches (case-insensitive)
+          const exactMatches = data.filter((book: Book) =>
+            book.title.toLowerCase() === query.toLowerCase()
+          )
+          setSearchResults(exactMatches)
+          setShowDropdown(true)
+        }
+      } catch (error) {
+        console.error('Search error:', error)
+      } finally {
+        setIsSearching(false)
+      }
+    }, 300),
+    []
+  )
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    debouncedSearch(value)
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       navigate(`/books?search=${encodeURIComponent(searchQuery)}`)
       setSearchQuery('')
+      setShowDropdown(false)
     }
+  }
+
+  const handleBookSelect = (book: Book) => {
+    navigate(`/books/${book._id}`)
+    setSearchQuery('')
+    setShowDropdown(false)
   }
 
   const toggleDarkMode = () => {
@@ -52,9 +107,54 @@ const Header = () => {
                 type="text"
                 placeholder="Search books..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchInputChange}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
                 className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
+
+              {/* Search Dropdown */}
+              {showDropdown && (
+                <div className="absolute top-full left-0 right-0 bg-card border border-border rounded-lg shadow-lg mt-1 z-50 max-h-80 overflow-y-auto">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                      Searching...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="py-2">
+                      {searchResults.map((book) => (
+                        <button
+                          key={book._id}
+                          onClick={() => handleBookSelect(book)}
+                          className="w-full px-4 py-3 text-left hover:bg-accent transition-colors flex items-center gap-3"
+                        >
+                          <img
+                            src={book.coverImage || '/src/assets/default-cover.png'}
+                            alt={book.title}
+                            className="w-8 h-10 object-cover rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{book.title}</div>
+                            <div className="text-xs text-muted-foreground truncate">by {book.author}</div>
+                          </div>
+                        </button>
+                      ))}
+                      <div className="border-t border-border p-2">
+                        <button
+                          onClick={handleSearch}
+                          className="w-full text-center text-sm text-primary hover:text-primary/80 transition-colors"
+                        >
+                          View all results for "{searchQuery}"
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">
+                      No books found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </form>
 

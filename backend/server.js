@@ -34,8 +34,20 @@ mongoose.connect(mongoURI)
   console.error('Error connecting to MongoDB:', error);
 });
 
-// Serve uploads folder as static
-app.use('/uploads', express.static('uploads'));
+// Initialize GridFS bucket
+const gfs = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+
+// Serve files from GridFS
+app.get('/api/files/:id', (req, res) => {
+  try {
+    const fileId = new mongoose.Types.ObjectId(req.params.id);
+    gfs.openDownloadStream(fileId).pipe(res).on('error', (error) => {
+      res.status(404).json({ message: 'File not found' });
+    });
+  } catch (error) {
+    res.status(400).json({ message: 'Invalid file ID' });
+  }
+});
 
 // Routes
 const booksRouter = require('./routes/books');
