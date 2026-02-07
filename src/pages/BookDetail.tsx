@@ -13,7 +13,7 @@ const BookDetail = () => {
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/books/${bookId}`)
+        const response = await fetch(`https://librarybeckend.onrender.com/api/books/${bookId}`)
         if (!response.ok) {
           const errorMsg = `Failed to fetch book: ${response.status} ${response.statusText}`;
           throw new Error(errorMsg);
@@ -96,7 +96,7 @@ const BookDetail = () => {
                   // Convert backslashes to forward slashes for URL
                   const normalized = book.coverImage.replace(/\\/g, '/');
                   if (normalized.startsWith('uploads/')) {
-                    return `http://localhost:5000/${normalized}`;
+                    return `https://librarybeckend.onrender.com/${normalized}`;
                   }
                   return normalized;
                 }
@@ -112,7 +112,7 @@ const BookDetail = () => {
               <button
                 onClick={() => {
                   if (book.pdfFile) {
-                    const pdfUrl = `http://localhost:5000/${book.pdfFile.replace(/\\/g, '/')}`;
+                    const pdfUrl = `https://librarybeckend.onrender.com/${book.pdfFile.replace(/\\/g, '/')}`;
                     window.open(pdfUrl, '_blank');
                   } else {
                     alert('No PDF available for this book.');

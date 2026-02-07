@@ -18,7 +18,7 @@ const BookCard = ({ book }: BookCardProps) => {
               // Convert backslashes to forward slashes for URL
               const normalized = book.coverImage.replace(/\\/g, '/');
               if (normalized.startsWith('uploads/')) {
-                return `http://localhost:5000/${normalized}`;
+                return `https://librarybeckend.onrender.com/${normalized}`;
               }
               return normalized;
             }
