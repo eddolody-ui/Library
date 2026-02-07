@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -10,8 +11,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, '../dist')));
+
 // MongoDB connection
-const mongoURI = 'mongodb+srv://eddolody_db_user:X2dH1UFQVpOYNG2g@library.3xuvd9o.mongodb.net/?appName=Library';
+const mongoURI = process.env.MONGO_URI;
 
 mongoose.connect(mongoURI)
 .then(() => {
@@ -33,7 +37,10 @@ app.get('/', (req, res) => {
   res.send('MiniLibrary Backend API');
 });
 
-
+// Catch all handler: send back React's index.html file for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 
 // Start server
 app.listen(PORT, () => {
