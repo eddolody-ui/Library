@@ -29,41 +29,45 @@ mongoose.connect(mongoURI)
       console.log('Dropped index isbn_1');
     }
   });
+
+  // Initialize GridFS bucket after connection is established
+  gfs = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+
+  // Serve files from GridFS
+  app.get('/api/files/:id', (req, res) => {
+    try {
+      const fileId = new mongoose.Types.ObjectId(req.params.id);
+      gfs.openDownloadStream(fileId).pipe(res).on('error', (error) => {
+        res.status(404).json({ message: 'File not found' });
+      });
+    } catch (error) {
+      res.status(400).json({ message: 'Invalid file ID' });
+    }
+  });
+
+  // Routes
+  const booksRouter = require('./routes/books');
+  app.use('/api/books', booksRouter);
+
+  // Basic route
+  app.get('/', (req, res) => {
+    res.send('MiniLibrary Backend API');
+  });
+
+  // Catch all handler: send back React's index.html file for client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  });
+
+  // Start server
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 })
 .catch((error) => {
   console.error('Error connecting to MongoDB:', error);
+  process.exit(1);
 });
 
-// Initialize GridFS bucket
-const gfs = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
-
-// Serve files from GridFS
-app.get('/api/files/:id', (req, res) => {
-  try {
-    const fileId = new mongoose.Types.ObjectId(req.params.id);
-    gfs.openDownloadStream(fileId).pipe(res).on('error', (error) => {
-      res.status(404).json({ message: 'File not found' });
-    });
-  } catch (error) {
-    res.status(400).json({ message: 'Invalid file ID' });
-  }
-});
-
-// Routes
-const booksRouter = require('./routes/books');
-app.use('/api/books', booksRouter);
-
-// Basic route
-app.get('/', (req, res) => {
-  res.send('MiniLibrary Backend API');
-});
-
-// Catch all handler: send back React's index.html file for client-side routing
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Declare gfs variable
+let gfs;
