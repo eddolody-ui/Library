@@ -2,20 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
 const multer = require('multer');
-const GridFsStorage = require('multer-gridfs-storage').GridFsStorage;
 const mongoose = require('mongoose');
 
-// Configure multer for GridFS storage
-const storage = new GridFsStorage({
-  url: process.env.MONGO_URI,
-  options: { useNewUrlParser: true, useUnifiedTopology: true },
-  file: (req, file) => {
-    return {
-      bucketName: 'uploads',
-      filename: `${Date.now()}-${file.originalname}`
-    };
-  }
-});
+// Configure multer to use memory storage
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -29,6 +19,19 @@ const upload = multer({
     cb(null, true);
   }
 });
+
+// Function to upload file to GridFS
+const uploadToGridFS = (file, bucketName) => {
+  return new Promise((resolve, reject) => {
+    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName });
+    const uploadStream = bucket.openUploadStream(`${Date.now()}-${file.originalname}`, {
+      contentType: file.mimetype
+    });
+    uploadStream.end(file.buffer);
+    uploadStream.on('finish', () => resolve(uploadStream.id));
+    uploadStream.on('error', reject);
+  });
+};
 
 // GET all books
 router.get('/', async (req, res) => {
@@ -131,9 +134,10 @@ router.post('/:id/upload-pdf', upload.single('pdf'), async (req, res) => {
       return res.status(400).json({ message: 'No PDF file uploaded' });
     }
 
-    book.pdfFile = req.file.id;
+    const pdfFileId = await uploadToGridFS(req.file, 'uploads');
+    book.pdfFile = pdfFileId;
     await book.save();
-    res.json({ message: 'PDF uploaded successfully', pdfFile: req.file.id });
+    res.json({ message: 'PDF uploaded successfully', pdfFile: pdfFileId });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
